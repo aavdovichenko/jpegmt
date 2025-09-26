@@ -300,7 +300,7 @@ bool Encoder::BitBuffer::reserve(int64_t bitCount)
   if (!words)
     return false;
 
-  assert(!m_bits || !m_bitCount);
+//  assert(!m_bits || !m_bitCount);
   if (m_bits && m_bitCount)
     memcpy(words, m_bits, (1 + (m_bitCount - 1) / (sizeof(words[0]) * 8)) * sizeof(words[0]));
   m_buffer = std::shared_ptr<uint64_t>(words, free);

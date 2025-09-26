@@ -1154,7 +1154,7 @@ void simdByteStuffing(uint8_t* bytes, int64_t byteCount, int64_t bytesToAdd)
   SimdType ff = SimdType::populate((int8_t)0xff);
 
   if (simdCount * SimdLength < byteCount)
-    byteStuffing64<revertBytes>(bytes + simdCount * SimdLength, byteCount - simdCount * SimdLength, bytesToAdd);
+    bytesToAdd = byteStuffing64<revertBytes>(bytes + simdCount * SimdLength, byteCount - simdCount * SimdLength, bytesToAdd);
 
   for(int64_t i = simdCount - 1; i >= 0; i--)
   {
