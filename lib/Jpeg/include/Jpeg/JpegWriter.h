@@ -27,39 +27,16 @@ struct EncodingOptions
 class Writer
 {
 public:
-  struct ProfileData
-  {
-    int64_t headersTime = 0;
-    int64_t encodingTime = 0;
-    int64_t postEncodingTime = 0;
-    int64_t streamWriteTime = 0;
-    int64_t memoryReleaseTime = 0;
-    int64_t otherCompressionTime = 0;
-
-    int64_t timeSum() const;
-
-    virtual void startTimer() = 0;
-    virtual int64_t elapsed() const = 0;
-
-    static void startTimer(ProfileData* data);
-    static void updateHeadersTime(ProfileData* data, bool restartTimer);
-    static void updateEncodingTime(ProfileData* data, bool restartTimer);
-    static void updatePostEncodingTime(ProfileData* data, bool restartTimer);
-    static void updateStreamWriteTime(ProfileData* data, bool restartTimer);
-    static void updateMemoryReleaseTime(ProfileData* data, bool restartTimer);
-    static void updateOtherCompressionTime(ProfileData* data, bool restartTimer);
-  };
-
   Writer(OutputStream* stream, ThreadPool* threadPool = nullptr);
 
   bool setQuality(int quality);
 
-  bool write(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options = EncodingOptions(), ProfileData* profileData = nullptr);
+  bool write(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options = EncodingOptions());
 
   bool writeHeader(const ImageMetaData& imageMetaData);
   bool writeFrameHeader(const ImageMetaData& imageMetaData);
   bool writeScanHeader(const ImageMetaData& imageMetaData);
-  bool compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options = EncodingOptions(), ProfileData* profileData = nullptr);
+  bool compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options = EncodingOptions());
   bool writeFileTrailer();
 
 protected:

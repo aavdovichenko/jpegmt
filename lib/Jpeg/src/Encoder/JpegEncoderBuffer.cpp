@@ -52,7 +52,7 @@ static Rgb8ToYccTable rgb8ToYcc = makeRgb8ToYccTable();
 EncoderBuffer::MetaData::MetaData(const std::vector<ComponentInfo>& components)
 {
   int blockOffset = 0;
-  for (size_t i = 0; i < components.size(); i++)
+  for (int i = 0; i < (int)components.size(); i++)
   {
     Component component;
 
@@ -334,14 +334,14 @@ static void rgbaToYccComponent2x2(const uint8_t* rgb, int width, int height, int
 #ifdef PLATFORM_COMPILER_MSVC
 #define FORCE_INLINE __forceinline
 #elif defined(PLATFORM_COMPILER_GNU)
-#define FORCE_INLINE __attribute__((always_inline))
+#define FORCE_INLINE __attribute__((always_inline)) inline
 #else
-#define FORCE_INLINE
+#define FORCE_INLINE inline
 #endif
 #endif
 
 template<ImageMetaData::Format rgbFormat, bool evenLinePadding, int SimdLength, typename T>
-FORCE_INLINE static inline void convert2x2RgbaToYcbr411(T (*dst)[Dct::BlockSize2][SimdLength], int i, int j, int n, uint32_t rgb0, uint32_t rgb1, uint32_t rgb2, uint32_t rgb3, int bias)
+FORCE_INLINE static void convert2x2RgbaToYcbr411(T (*dst)[Dct::BlockSize2][SimdLength], int i, int j, int n, uint32_t rgb0, uint32_t rgb1, uint32_t rgb2, uint32_t rgb3, int bias)
 {
   constexpr int yComponentOffset = 0;
   constexpr int cbComponentOffset = 4;
@@ -480,7 +480,7 @@ void grayScanlineSimdToYComponent<Dct::BlockSize, int32_t>(const uint8_t* pixels
 }
 
 template<>
-FORCE_INLINE inline void grayScanlineSimdToYComponent<Dct::BlockSize*2, int16_t>(const uint8_t* pixels, int scanlineLength, const EncoderBuffer::McuIndex* mcu, int count, int16_t (*dst)[Dct::BlockSize*2])
+FORCE_INLINE void grayScanlineSimdToYComponent<Dct::BlockSize*2, int16_t>(const uint8_t* pixels, int scanlineLength, const EncoderBuffer::McuIndex* mcu, int count, int16_t (*dst)[Dct::BlockSize*2])
 {
   using namespace Platform::Cpu;
   constexpr int SimdLength = Dct::BlockSize*2;
@@ -871,7 +871,7 @@ static void loadRgbSimdLine(Platform::Cpu::int8x32_t* r, Platform::Cpu::int8x32_
 #endif
 
 template<int SimdLength, typename T>
-FORCE_INLINE static inline void rgbToYcbr(typename Platform::Cpu::SIMD<T, SimdLength>::Type r, typename Platform::Cpu::SIMD<T, SimdLength>::Type g, typename Platform::Cpu::SIMD<T, SimdLength>::Type b,
+FORCE_INLINE static void rgbToYcbr(typename Platform::Cpu::SIMD<T, SimdLength>::Type r, typename Platform::Cpu::SIMD<T, SimdLength>::Type g, typename Platform::Cpu::SIMD<T, SimdLength>::Type b,
   typename Platform::Cpu::SIMD<T, SimdLength>::Type& y, typename Platform::Cpu::SIMD<T, SimdLength>::Type& cb, typename Platform::Cpu::SIMD<T, SimdLength>::Type& cr)
 {
   y  = RgbToYcc<T, SimdLength, 0>::y(r, g, b);

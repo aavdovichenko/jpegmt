@@ -124,57 +124,17 @@ void test_libjpeg(const Image& image)
 }
 #endif
 
-//#define PROFILE
-
-#ifdef PROFILE
-struct ProfileData : public Jpeg::Writer::ProfileData
-{
-  ElapsedTimer m_timer;
-
-  void startTimer() override { m_timer.start(); }
-  int64_t elapsed() const override { return m_timer.elapsed();  }
-};
-
-#endif
-
 void test_jpegmt(const Image& image)
 {
-#ifdef PROFILE
-  ElapsedTimer constructionTimer;
-  int64_t constructionTime = 0;
-  ProfileData profileData;
-#endif
-
   const Jpeg::ImageMetaData& imageMetaData = image.m_metaData;
   JpegMemoryOutputStream buffer;
   for (int i = 0; i < testPassCount; i++)
   {
-#ifdef PROFILE
-    constructionTimer.start();
-#endif
     Jpeg::Writer writer(&buffer, threadPool.get());
     writer.setQuality(quality);
-#ifdef PROFILE
-    constructionTime += constructionTimer.elapsed();
-#endif
 
-    writer.write(imageMetaData, (const uint8_t*)image.scanline(0), encodingOptions
-#ifdef PROFILE
-      , &profileData
-#endif
-    );
+    writer.write(imageMetaData, (const uint8_t*)image.scanline(0), encodingOptions);
   }
-#ifdef PROFILE
-//  printf("construction time: %lf msec\n", constructionTime / 1e6);
-//  printf("headers time: %lf msec\n", profileData.headersTime / 1e6);
-//  printf("quantization time: %lf msec\n", profileData.quantizationTime / 1e6);
-  printf("encoding time: %lf msec\n", profileData.encodingTime / 1e6);
-  printf("post encoding time: %lf msec\n", profileData.postEncodingTime / 1e6);
-  printf("memory release time: %lf msec\n", profileData.memoryReleaseTime / 1e6);
-  printf("stream write time: %lf msec\n", profileData.streamWriteTime / 1e6);
-//  printf("other compression time: %lf msec\n", profileData.otherCompressionTime / 1e6);
-  printf("time sum: %lf msec\n", (constructionTime + profileData.timeSum()) / 1e6);
-#endif
 }
 
 static int usage()

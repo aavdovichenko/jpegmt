@@ -43,9 +43,8 @@ bool Writer::setQuality(int quality)
   return true;
 }
 
-bool Writer::write(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options, ProfileData* profileData)
+bool Writer::write(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options)
 {
-  ProfileData::startTimer(profileData);
   if (!m_stream)
     return false;
 
@@ -55,13 +54,10 @@ bool Writer::write(const ImageMetaData& imageMetaData, const uint8_t* pixels, co
     return false;
   if (!writeScanHeader(imageMetaData))
     return false;
-  ProfileData::updateHeadersTime(profileData, false);
-  if (!compressAndWrite(imageMetaData, pixels, options, profileData))
+  if (!compressAndWrite(imageMetaData, pixels, options))
     return false;
-  ProfileData::startTimer(profileData);
   if (!writeFileTrailer())
     return false;
-  ProfileData::updateHeadersTime(profileData, false);
   return true;
 }
 
@@ -188,9 +184,8 @@ void releaseQuantizationBuffer(int simdLength, int16_t (*buffer)[Dct::BlockSize2
   }
 }
 
-bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options, ProfileData* profileData)
+bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options)
 {
-  ProfileData::startTimer(profileData);
   std::vector<Component> components = imageComponents(imageMetaData);
   std::vector<EncoderBuffer::MetaData::ComponentInfo> componentInfo;
   std::vector<int> componentQuantizationTableIndices;
@@ -239,8 +234,6 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
     std::vector<HuffmanEncoder>{{m_luminanceDcHuffmanTable, m_luminanceAcHuffmanTable}, {m_chrominanceDcHuffmanTable, m_chrominanceAcHuffmanTable}},
     componentHuffmanEncoderIndices);
 
-  ProfileData::updateOtherCompressionTime(profileData, true);
-
   int nThreads = m_threadPool ? m_threadPool->computeThreadCount(bufferCount) : 1;
   std::vector<Encoder::BitBuffer> compressedParts(nThreads);
   int blocksPerBuffer = bufferSimdBlocks * encoderBufferMetaData.m_simdLength * encoderBufferMetaData.getMcuBlockCount();
@@ -283,7 +276,7 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
         lastBufferInfo.mutex.unlock();
 
         int16_t (*lastQuantizedMcu)[Dct::BlockSize2] = lastBufferQuantized + (bufferMcuCount - 1) * encoderBufferMetaData.getMcuBlockCount();
-        for (size_t i = 0; i < encoderBufferMetaData.m_components.size(); i++)
+        for (int i = 0; i < (int)encoderBufferMetaData.m_components.size(); i++)
         {
           EncoderBuffer::MetaData::Component c = encoderBufferMetaData.getComponent(i);
           lastDc[i] = lastQuantizedMcu[c.m_blockOffset + c.m_blockCount - 1][0];
@@ -321,12 +314,10 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
   else
     worker(0, 0, bufferCount - 1);
 
-  ProfileData::updateEncodingTime(profileData, true);
   delete[] threadLastBufferInfo;
   threadLastBufferInfo = nullptr;
   releaseQuantizationBuffer(encoderBufferMetaData.m_simdLength, quantizationBuffer);
   quantizationBuffer = nullptr;
-  ProfileData::updateMemoryReleaseTime(profileData, true);
 
   Encoder::BitBuffer compressed = Encoder::BitBuffer::merge(compressedParts, 0.1);
   if (!compressed.m_bits)
@@ -339,17 +330,11 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
 
   compressed.m_bitCount = HuffmanEncoder::byteStuffing(compressed.m_bits, compressed.m_bitCount, bytesToAdd);
 
-  ProfileData::updatePostEncodingTime(profileData, true);
-
   assert(compressed.m_bitCount % 8 == 0);
   int64_t written = m_stream->writeJpegBytes((char*)compressed.m_bits, compressed.m_bitCount / 8);
 
-  ProfileData::updateStreamWriteTime(profileData, true);
-
   compressedParts.clear();
   compressed = Encoder::BitBuffer();
-
-  ProfileData::updateMemoryReleaseTime(profileData, false);
 
   assert(written > 0);
   return written > 0;
@@ -392,65 +377,6 @@ Writer::Component::Component()
 Writer::Component::Component(int id, int hSamplingFactor, int vSamplingFactor, int huffmanTableIndex, int quantizationTableIndex) :
   m_id(id), m_hSamplingFactor(hSamplingFactor), m_vSamplingFactor(vSamplingFactor), m_huffmanTableIndex(huffmanTableIndex), m_quantizationTableIndex(quantizationTableIndex)
 {
-}
-
-int64_t Writer::ProfileData::timeSum() const
-{
-  return headersTime + encodingTime + postEncodingTime + streamWriteTime + memoryReleaseTime + otherCompressionTime;
-}
-
-void Writer::ProfileData::startTimer(ProfileData* data)
-{
-  if (data)
-    data->startTimer();
-}
-
-void Writer::ProfileData::updateHeadersTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->headersTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
-}
-
-void Writer::ProfileData::updateEncodingTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->encodingTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
-}
-
-void Writer::ProfileData::updatePostEncodingTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->postEncodingTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
-}
-
-void Writer::ProfileData::updateStreamWriteTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->streamWriteTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
-}
-
-void Writer::ProfileData::updateMemoryReleaseTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->memoryReleaseTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
-}
-
-void Writer::ProfileData::updateOtherCompressionTime(ProfileData* data, bool restartTimer)
-{
-  if (data)
-    data->otherCompressionTime += data->elapsed();
-  if (restartTimer)
-    startTimer(data);
 }
 
 }

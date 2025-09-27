@@ -20,7 +20,7 @@ DESTDIR = $${BUILD_TYPE}
 
 win32-msvc* {
   CONFIG(debug, debug|release) : QMAKE_CXXFLAGS += -Ob1
-  QMAKE_CXXFLAGS += /arch:AVX2
+  QMAKE_CXXFLAGS += -WX -arch:AVX2
 }
 
 linux-g++* {

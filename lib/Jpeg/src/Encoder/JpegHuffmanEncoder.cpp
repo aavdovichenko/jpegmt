@@ -122,13 +122,13 @@ HuffmanEncoder::HuffmanEncoder(const HuffmanTable& dcTable, const HuffmanTable& 
 #ifdef PLATFORM_COMPILER_MSVC
 #define FORCE_INLINE __forceinline
 #elif defined(PLATFORM_COMPILER_GNU)
-#define FORCE_INLINE __attribute__((always_inline))
+#define FORCE_INLINE __attribute__((always_inline)) inline
 #else
-#define FORCE_INLINE
+#define FORCE_INLINE inline
 #endif
 #endif
 
-FORCE_INLINE static inline uint64_t toBigEndian(uint64_t source)
+FORCE_INLINE static uint64_t toBigEndian(uint64_t source)
 {
   return Platform::Cpu::byteOrder == Platform::Cpu::BigEndian ? source :
       ((source & 0x00000000000000ffULL) << 56)
@@ -141,7 +141,7 @@ FORCE_INLINE static inline uint64_t toBigEndian(uint64_t source)
     | ((source & 0xff00000000000000ULL) >> 56);
 }
 
-FORCE_INLINE static inline uint64_t fromBigEndian(uint64_t source)
+FORCE_INLINE static uint64_t fromBigEndian(uint64_t source)
 {
   return toBigEndian(source);
 }
@@ -498,7 +498,7 @@ int64_t HuffmanEncoder::encode(const int16_t* block, const int* mcuComponents, i
 #if !defined(DEBUG) && !defined(_DEBUG)
 FORCE_INLINE
 #endif
-static inline uint64_t toZigzagOrder(const int16_t* block, int16_t* zigzag)
+static uint64_t toZigzagOrder(const int16_t* block, int16_t* zigzag)
 {
   using namespace Platform::Cpu;
   typedef SIMD<int16_t, 8> SimdHelper;
@@ -685,7 +685,7 @@ static AcBitMaskx16 acBitMaskx16_2 = makeAcBitMask<Platform::Cpu::int16x16_t, 10
 static AcBitMaskx16 acBitMaskx16_3 = makeAcBitMask<Platform::Cpu::int16x16_t, 21, 34, 37, 47, 50, 56, 59, 61, 35, 36, 48, 49, 57, 58, 62, 63>();
 
 template<> 
-FORCE_INLINE inline uint64_t getAcMask<16>(const int16_t* block, int16_t* dst)
+FORCE_INLINE uint64_t getAcMask<16>(const int16_t* block, int16_t* dst)
 {
   using namespace Platform::Cpu;
   int16x16_t bits0_15 = int16x16_t::zero(), bits16_31 = int16x16_t::zero(), bits32_47 = int16x16_t::zero(), bits48_63 = int16x16_t::zero();
@@ -725,7 +725,7 @@ static AcBitMaskx8 acBitMaskx8_6 = makeAcBitMask<Platform::Cpu::int16x8_t, 21, 3
 static AcBitMaskx8 acBitMaskx8_7 = makeAcBitMask<Platform::Cpu::int16x8_t, 35, 36, 48, 49, 57, 58, 62, 63>();
 
 template<>
-FORCE_INLINE inline uint64_t getAcMask<8>(const int16_t* block, int16_t* dst)
+FORCE_INLINE uint64_t getAcMask<8>(const int16_t* block, int16_t* dst)
 {
   using namespace Platform::Cpu;
   int16x8_t bits0_15 = int16x8_t::zero(), bits16_31 = int16x8_t::zero(), bits32_47 = int16x8_t::zero(), bits48_63 = int16x8_t::zero();
@@ -768,7 +768,7 @@ static uint64_t wordMask(uint64_t word)
 }
 
 template<>
-FORCE_INLINE inline uint64_t getAcMask<1>(const int16_t* block, int16_t* dst)
+FORCE_INLINE uint64_t getAcMask<1>(const int16_t* block, int16_t* dst)
 {
   for (int i = 1; i < 64; i++)
     dst[i] = block[i] + (block[i] >> 15);
@@ -872,6 +872,7 @@ int64_t HuffmanEncoder::encodeBlocks(const int16_t* block, const int* mcuCompone
 //      int maxCodeSize = 0;
       AcCode acCodes[64];
 
+      // TODO: solve msvc issue with tzcnt false output dependency and enable that branch
       if (0 && Platform::Cpu::mostSignificantSetBit<uint64_t>(mask) + 1 - cntRuns < 16)
       {
         for (int i = 0; i < cntRuns; i++) // 7 runs average for 75% quality, 53 runs average for 100% quality
