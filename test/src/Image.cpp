@@ -322,6 +322,9 @@ JpegSourceManager::JpegSourceManager(std::filebuf* file) : m_file(file)
 
 }
 
+#endif
+
+#if defined(WITH_LIBJPEG) || defined(WITH_LIBPNG)
 static int alignedScanlineSize(int scanlineSize, int alignment)
 {
   return scanlineSize > 0 ? (1 + (scanlineSize - 1) / alignment) * alignment : scanlineSize;
