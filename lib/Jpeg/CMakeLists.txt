@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.26)
+
 project(jpegmt CXX)
 
 set(HELPER_LIB_INCLUDE_PATH "${jpegmt_SOURCE_DIR}/../Helper/include" CACHE STRING "")
@@ -38,3 +40,9 @@ list(APPEND JPEGMT_SOURCES
 )
 
 add_library(jpegmt STATIC ${JPEGMT_SOURCES})
+
+if (MSVC)
+  target_compile_options(jpegmt PRIVATE -WX -arch:AVX2)
+else()
+  target_compile_options(jpegmt PRIVATE -msse4.1 -mavx2 -Werror -Wno-ignored-attributes)
+endif()
