@@ -194,6 +194,9 @@ FORCE_INLINE static void convert2x2RgbaToYcbr411(T(*dst)[Dct::BlockSize2][SimdLe
 template<int SimdLength, typename DstType>
 static void loadRgbSimdLine(DstType* dst, const int32_t(*blocks)[2][Dct::BlockSize]);
 
+namespace
+{
+
 template<int SimdLength>
 struct RgbComponent
 {
@@ -277,6 +280,8 @@ struct RgbComponentExtractor<rgbFormat, int32_t, SimdLength>
     b.setFromPackedUint8(b8);
   }
 };
+
+}
 
 //#define PER_COMPONENT_TRANSPOSING
 
@@ -716,6 +721,7 @@ struct rgbaToYcbr411Helper
     case ImageMetaData::Bgra32:
       return perform<ImageMetaData::Bgra32>(imageMetaData, rgb, bufferMetaData, mcu, count, dst, options);
     case ImageMetaData::Grayscale8:
+    case ImageMetaData::Invalid:
       assert(false);
     }
 #else

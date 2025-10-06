@@ -15,6 +15,13 @@ static int64_t zeroAcBlockCount = 0;
 static int64_t totalRunCount = 0;
 #endif
 
+static int32_t maskTable[16] = {
+  0x0000, 0x0001, 0x0003, 0x0007,
+  0x000f, 0x001f, 0x003f, 0x007f,
+  0x00ff, 0x01ff, 0x03ff, 0x07ff,
+  0x0fff, 0x1fff, 0x3fff, 0x7fff,
+};
+
 namespace
 {
 
@@ -152,13 +159,6 @@ void updateMaskBits(const AcBitMask<T>& bitMask, T acMask, T& bits0_15, T& bits1
 }
 
 template <int SimdLength> static uint64_t getAcMask(const int16_t* block, int16_t* dst);
-
-static int32_t maskTable[16] = {
-  0x0000, 0x0001, 0x0003, 0x0007,
-  0x000f, 0x001f, 0x003f, 0x007f,
-  0x00ff, 0x01ff, 0x03ff, 0x07ff,
-  0x0fff, 0x1fff, 0x3fff, 0x7fff,
-};
 
 static int32_t acMask(uint8_t acbits)
 {

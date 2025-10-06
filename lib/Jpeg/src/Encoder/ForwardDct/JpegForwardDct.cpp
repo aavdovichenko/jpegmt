@@ -10,6 +10,9 @@
 namespace Jpeg
 {
 
+namespace
+{
+
 template <>
 struct Int16SimdHelper<1>
 {
@@ -39,6 +42,8 @@ struct Int16SimdHelper<1>
     return ExtendedType{a * aFactor + b * bFactor};
   }
 };
+
+}
 
 #ifndef TRANSPOSED_SIMD_BUFFER
 namespace
