@@ -108,6 +108,7 @@ void Encoder::optimizeDummyBlocks(const EncoderBuffer::MetaData& encoderBufferMe
 #endif
 #endif
 
+#if 0
 template<int BlockCount>
 FORCE_INLINE void encodeComponent(const EncoderBuffer::MetaData::Component& component, const HuffmanEncoder& huffmanEncoder, int& prevComponentDc, const int16_t(*blocks)[Dct::BlockSize2], Encoder::BitBuffer& compressionBuffer)
 {
@@ -120,6 +121,7 @@ FORCE_INLINE void encodeComponent(const EncoderBuffer::MetaData::Component& comp
     prevComponentDc = block[0];
   }
 }
+#endif
 
 bool Encoder::encode(const EncoderBuffer::MetaData& encoderBufferMetaData, BitBuffer& compressionBuffer, std::vector<int>& prevComponentDc, const int16_t (*blocks)[Dct::BlockSize2], int count, const HuffmanEncoderOptions& options) const
 {
