@@ -511,8 +511,10 @@ static Image loadPngImage(std::filebuf& file, int rowAlignment)
       png_set_gamma(png_ptr, screen_gamma, 0.45455);
   }
 
+  bool haveAlpha = false;
   if ((color_type & PNG_COLOR_MASK_COLOR) != 0)
   {
+    haveAlpha = (color_type & PNG_COLOR_MASK_ALPHA);
     png_set_bgr(png_ptr);
     if (!png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
       png_set_filler(png_ptr, 0xffff, PNG_FILLER_AFTER);
@@ -529,6 +531,23 @@ static Image loadPngImage(std::filebuf& file, int rowAlignment)
 
   png_read_image(png_ptr, row_pointers);
   png_read_end(png_ptr, info_ptr);
+
+  if (haveAlpha)
+  {
+    for (png_uint_32 row = 0; row < height; row++)
+    {
+      uint8_t (*rowBytes)[4] = (uint8_t (*)[4])image.scanline(row);
+
+      for(png_uint_32 x = 0; x < width; x++)
+      {
+        uint8_t* pixel = rowBytes[x];
+        uint8_t alpha = pixel[3];
+
+        for (int c = 0; c < 3; c++)
+          pixel[c] = (pixel[c] * alpha + 128) / 255;
+      }
+    }
+  }
 
   free(row_pointers);
   png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
