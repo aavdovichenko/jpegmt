@@ -21,6 +21,13 @@ struct NoReturnValueCallable
   static void makeDefaultValue() {}
 };
 
+template <typename T, T defaultValue>
+struct ReturnValueCallable
+{
+  typedef T ReturnType;
+  static T makeDefaultValue() { return defaultValue; }
+};
+
 template<typename Callable>
 struct SimdFunctionChooser
 {

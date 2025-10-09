@@ -145,22 +145,22 @@ EncoderBuffer::EncoderBuffer(const MetaData& metaData, int blockCount) : m_metaD
 }
 #else
 
-template <> void* allocSimdBuffer<int16_t, 1>(int count)
+template <> void* EncoderBuffer::allocSimdBuffer<int16_t, 1>(int count)
 {
   return malloc(sizeof(int16_t) * Dct::BlockSize2 * count);
 }
 
-template <> void releaseSimdBuffer<int16_t, 1>(void* buffer)
+template <> void EncoderBuffer::releaseSimdBuffer<int16_t, 1>(void* buffer)
 {
   return free(buffer);
 }
 
-template <> void* allocSimdBuffer<int32_t, 1>(int count)
+template <> void* EncoderBuffer::allocSimdBuffer<int32_t, 1>(int count)
 {
   return malloc(sizeof(int32_t) * Dct::BlockSize2 * count);
 }
 
-template <> void releaseSimdBuffer<int32_t, 1>(void* buffer)
+template <> void EncoderBuffer::releaseSimdBuffer<int32_t, 1>(void* buffer)
 {
   return free(buffer);
 }
@@ -180,7 +180,7 @@ struct SimdBufferAllocator
   template <typename T, int SimdLength>
   static void* perform(int count)
   {
-    return allocSimdBuffer<T, SimdLength>(count);
+    return EncoderBuffer::allocSimdBuffer<T, SimdLength>(count);
   }
 };
 
@@ -189,7 +189,7 @@ struct SimdBufferDeallocator : public NoReturnValueCallable
   template <typename T, int SimdLength>
   static void perform(void* buffer)
   {
-    return releaseSimdBuffer<T, SimdLength>(buffer);
+    return EncoderBuffer::releaseSimdBuffer<T, SimdLength>(buffer);
   }
 };
 

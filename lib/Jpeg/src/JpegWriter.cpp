@@ -7,6 +7,7 @@
 #include <Jpeg/JpegImageMetaData.h>
 #include <Jpeg/JpegThreadPool.h>
 
+#include "Encoder/Common.h"
 #include "Encoder/JpegEncoder.h"
 #include "JpegFileFormat.h"
 
@@ -184,36 +185,51 @@ bool Writer::writeScanHeader(const ImageMetaData& imageMetaData)
   return true;
 }
 
-int16_t (*allocQuantizationBuffer(int simdLength, int count))[Dct::BlockSize2]
+namespace
 {
-  switch (simdLength)
+  struct AllocQuantizationBufferCallable : public ReturnValueCallable<int16_t (*)[Dct::BlockSize2], nullptr>
   {
-  case 16:
-    return Platform::Cpu::SIMD<int16_t, 16>::allocMemory<int16_t[Dct::BlockSize2]>(count);
-  case 8:
-    return Platform::Cpu::SIMD<int16_t, 8>::allocMemory<int16_t[Dct::BlockSize2]>(count);
-  case 4:
-    return Platform::Cpu::SIMD<int16_t, 4>::allocMemory<int16_t[Dct::BlockSize2]>(count);
-  case 1:
-    return Platform::Cpu::SIMD<int16_t, 1>::allocMemory<int16_t[Dct::BlockSize2]>(count);
+    template <typename T, int SimdLength>
+    static int16_t (*perform(int count))[Dct::BlockSize2]
+    {
+      return (int16_t (*)[Dct::BlockSize2])EncoderBuffer::allocSimdBuffer<T, SimdLength>(count);
+    }
+  };
+
+  struct ReleaseQuantizationBufferCallable : public NoReturnValueCallable
+  {
+    template <typename T, int SimdLength>
+    static void perform(int16_t (*buffer)[Dct::BlockSize2])
+    {
+      return EncoderBuffer::releaseSimdBuffer<T, SimdLength>(buffer);
+    }
+  };
+}
+
+int16_t (*allocQuantizationBuffer(const EncoderBuffer::MetaData& bufferMetaData, int count))[Dct::BlockSize2]
+{
+  switch(bufferMetaData.m_itemType)
+  {
+  case EncoderBuffer::MetaData::Int16:
+    return SimdFunctionChooser<AllocQuantizationBufferCallable>::perform<int16_t>(bufferMetaData.m_simdLength, count);
+  case EncoderBuffer::MetaData::Int32:
+    return SimdFunctionChooser<AllocQuantizationBufferCallable>::perform<int32_t>(bufferMetaData.m_simdLength, count);
   }
 
+  assert(false);
   return nullptr;
 }
 
-void releaseQuantizationBuffer(int simdLength, int16_t (*buffer)[Dct::BlockSize2])
+void releaseQuantizationBuffer(const EncoderBuffer::MetaData& bufferMetaData, int16_t (*buffer)[Dct::BlockSize2])
 {
-  switch (simdLength)
+  switch (bufferMetaData.m_itemType)
   {
-  case 16:
-    return Platform::Cpu::SIMD<int16_t, 16>::freeMemory(buffer);
-  case 8:
-    return Platform::Cpu::SIMD<int16_t, 8>::freeMemory(buffer);
-  case 4:
-    return Platform::Cpu::SIMD<int16_t, 4>::freeMemory(buffer);
-  case 1:
-    return Platform::Cpu::SIMD<int16_t, 1>::freeMemory(buffer);
+  case EncoderBuffer::MetaData::Int16:
+    return SimdFunctionChooser<ReleaseQuantizationBufferCallable>::perform<int16_t>(bufferMetaData.m_simdLength, buffer);
+  case EncoderBuffer::MetaData::Int32:
+    return SimdFunctionChooser<ReleaseQuantizationBufferCallable>::perform<int32_t>(bufferMetaData.m_simdLength, buffer);
   }
+  assert(false);
 }
 
 bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options)
@@ -270,7 +286,7 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
   int nThreads = m_threadPool ? m_threadPool->computeThreadCount(bufferCount) : 1;
   std::vector<Encoder::BitBuffer> compressedParts(nThreads);
   int blocksPerBuffer = bufferSimdBlocks * encoderBufferMetaData.m_simdLength * encoderBufferMetaData.getMcuBlockCount();
-  int16_t (*quantizationBuffer)[Dct::BlockSize2] = allocQuantizationBuffer(encoderBufferMetaData.m_simdLength, blocksPerBuffer * nThreads * 2);
+  int16_t (*quantizationBuffer)[Dct::BlockSize2] = allocQuantizationBuffer(encoderBufferMetaData, blocksPerBuffer * nThreads * 2);
   struct LastBufferInfo
   {
     std::mutex mutex;
@@ -350,7 +366,7 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
 
   delete[] threadLastBufferInfo;
   threadLastBufferInfo = nullptr;
-  releaseQuantizationBuffer(encoderBufferMetaData.m_simdLength, quantizationBuffer);
+  releaseQuantizationBuffer(encoderBufferMetaData, quantizationBuffer);
   quantizationBuffer = nullptr;
 
   Encoder::BitBuffer compressed = Encoder::BitBuffer::merge(compressedParts, 0.1, huffmanEncoderOptions);

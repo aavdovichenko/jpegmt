@@ -36,11 +36,6 @@ static inline int getScanlineSimdMcuCount(const EncoderBuffer::McuIndex* mcu, in
   return simdBufferCount * mcuBlockLength;
 }
 
-// memory
-
-template <typename T, int SimdLength> void* allocSimdBuffer(int count);
-template <typename T, int SimdLength> void releaseSimdBuffer(void* buffer);
-
 // Grayscale
 
 template<typename T>

@@ -102,6 +102,9 @@ public:
 #endif
   ~EncoderBuffer();
 
+  template <typename T, int SimdLength> static void* allocSimdBuffer(int count);
+  template <typename T, int SimdLength> static void releaseSimdBuffer(void* buffer);
+
   bool importImageBlocks(const ImageMetaData& imageMetaData, const uint8_t* pixels, const MetaData::McuIndex* mcu, int count, const EncodingOptions& options);
   void exportQuantizedBlocks(int16_t (*dst)[Dct::BlockSize2], int count) const;
 
