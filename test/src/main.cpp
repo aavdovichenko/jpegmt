@@ -192,7 +192,7 @@ static bool parseArgs(int argc, char* argv[])
           return false;
       }
       else if (arg == "--force-int32")
-        encodingOptions.m_encoderBufferItemType = Jpeg::EncodingOptions::Int32;
+        encodingOptions.m_encoderBufferItemType = Jpeg::EncoderBufferItemType::Int32;
       else if (arg == "--max-simd-bits")
       {
         if (!getOptionIntValue(argc, argv, i++, maxSimdBits))
@@ -212,8 +212,8 @@ static bool parseArgs(int argc, char* argv[])
       srcImagePath = argv[i];
   }
 
-  int itemBits = encodingOptions.m_encoderBufferItemType == Jpeg::EncodingOptions::Int32 ? 32 : 16;
-  encodingOptions.m_encoderBufferMaxSimdLength = std::max(maxSimdBits / itemBits, 1);
+  encodingOptions.m_encoderBufferMaxInt16SimdLength = std::max(maxSimdBits / 16, 1);
+  encodingOptions.m_encoderBufferMaxInt32SimdLength = std::max(maxSimdBits / 32, 1);
   encodingOptions.m_huffmanEncoderMaxSimdLength = std::max(maxSimdBits / 16, 1);
   encodingOptions.m_byteStuffingMaxSimdLength = std::max(maxSimdBits / 8, 1);
 
@@ -269,8 +269,8 @@ int main(int argc, char *argv[])
     Jpeg::Writer jpegWriter(&f, threadPool.get());
     jpegWriter.setQuality(quality);
 
-    Jpeg::EncodingOptions::EncoderBufferItemType itemType = Jpeg::Writer::getEncoderBufferItemType(encodingOptions);
-    printf("encoder buffer  simd type: %sx%d\n", itemType == Jpeg::EncodingOptions::Int32 ? "int32" : "int16", Jpeg::Writer::getEncoderBufferSimdLength(encodingOptions));
+    Jpeg::EncoderBufferItemType itemType = Jpeg::Writer::getEncoderBufferItemType(encodingOptions);
+    printf("encoder buffer  simd type: %sx%d\n", itemType == Jpeg::EncoderBufferItemType::Int32 ? "int32" : "int16", Jpeg::Writer::getEncoderBufferSimdLength(encodingOptions));
     printf("huffman encoder simd type: int16x%d\n", Jpeg::Writer::getHuffmanEncoderSimdLength(encodingOptions));
     printf("byte stuffing   simd type: int8x%d\n", Jpeg::Writer::getByteStuffingSimdLength(encodingOptions));
 

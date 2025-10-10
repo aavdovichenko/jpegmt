@@ -11,10 +11,24 @@
 namespace Jpeg
 {
 
+static int itemTypeMaxSimdLength(const EncodingOptions& options)
+{
+  switch(options.m_encoderBufferItemType)
+  {
+  case Int16:
+    return options.m_encoderBufferMaxInt16SimdLength;
+  case Int32:
+    return options.m_encoderBufferMaxInt32SimdLength;
+  }
+
+  assert(false);
+  return 1;
+}
+
 // EncoderBuffer::MetaData
 
-EncoderBuffer::MetaData::MetaData(const std::vector<ComponentInfo>& components, ItemType itemType, int maxSimdLength) :
-  m_itemType(itemType), m_maxSimdLength(maxSimdLength)
+EncoderBuffer::MetaData::MetaData(const std::vector<ComponentInfo>& components, const EncodingOptions& options) :
+  m_itemType(options.m_encoderBufferItemType), m_maxSimdLength(itemTypeMaxSimdLength(options))
 {
   int blockOffset = 0;
   for (int i = 0; i < (int)components.size(); i++)
@@ -45,7 +59,12 @@ EncoderBuffer::MetaData::MetaData(const std::vector<ComponentInfo>& components, 
 
   m_mcuBlockCount = blockOffset;
 
-  setSimdLength(getSimdLength(m_itemType, maxSimdLength));
+  setSimdLength(getSimdLength(m_itemType, m_maxSimdLength));
+}
+
+int EncoderBuffer::MetaData::getSimdLength(const EncodingOptions& options)
+{
+  return getSimdLength(options.m_encoderBufferItemType, itemTypeMaxSimdLength(options));
 }
 
 int EncoderBuffer::MetaData::getSimdLength(ItemType itemType, int maxSimdLength)
@@ -201,10 +220,10 @@ EncoderBuffer::EncoderBuffer(const MetaData& metaData, int simdBlockCount) : m_m
   {
     switch(metaData.m_itemType)
     {
-    case MetaData::Int16:
+    case MetaData::ItemType::Int16:
       m_itemBuffer = SimdFunctionChooser<SimdBufferAllocator>::perform<int16_t>(metaData.m_simdLength, simdBlockCount * metaData.m_mcuBlockCount);
       break;
-    case MetaData::Int32:
+    case Int32:
       m_itemBuffer = SimdFunctionChooser<SimdBufferAllocator>::perform<int32_t>(metaData.m_simdLength, simdBlockCount * metaData.m_mcuBlockCount);
       break;
     }
@@ -218,10 +237,10 @@ EncoderBuffer::~EncoderBuffer()
   {
     switch (m_metaData.m_itemType)
     {
-    case MetaData::Int16:
+    case MetaData::ItemType::Int16:
       SimdFunctionChooser<SimdBufferDeallocator>::perform<int16_t>(m_metaData.m_simdLength, m_itemBuffer);
       break;
-    case MetaData::Int32:
+    case MetaData::ItemType::Int32:
       SimdFunctionChooser<SimdBufferDeallocator>::perform<int32_t>(m_metaData.m_simdLength, m_itemBuffer);
       break;
     }
@@ -561,10 +580,10 @@ bool EncoderBuffer::importImageBlocks(const ImageMetaData& imageMetaData, const 
 #else
     switch (m_metaData.m_itemType)
     {
-    case MetaData::Int16:
+    case MetaData::ItemType::Int16:
       SimdFunctionChooser<GrayToYComponentCallable>::perform<int16_t>(m_metaData.m_simdLength, imageMetaData, pixels, m_metaData, mcu, count, (int16_t*)m_itemBuffer);
       break;
-    case MetaData::Int32:
+    case MetaData::ItemType::Int32:
       SimdFunctionChooser<GrayToYComponentCallable>::perform<int32_t>(m_metaData.m_simdLength, imageMetaData, pixels, m_metaData, mcu, count, (int32_t*)m_itemBuffer);
       break;
     }
@@ -576,10 +595,10 @@ bool EncoderBuffer::importImageBlocks(const ImageMetaData& imageMetaData, const 
     {
       switch (m_metaData.m_itemType)
       {
-      case MetaData::Int16:
+      case MetaData::ItemType::Int16:
         SimdFunctionChooser<RgbaToYcbr411Callable>::perform<int16_t>(m_metaData.m_simdLength, imageMetaData, pixels, m_metaData, mcu, count, (int16_t*)m_itemBuffer, rgbToYccOptions);
         break;
-      case MetaData::Int32:
+      case MetaData::ItemType::Int32:
         SimdFunctionChooser<RgbaToYcbr411Callable>::perform<int32_t>(m_metaData.m_simdLength, imageMetaData, pixels, m_metaData, mcu, count, (int32_t*)m_itemBuffer, rgbToYccOptions);
         break;
       }
@@ -671,10 +690,10 @@ bool EncoderBuffer::importImageBlocks(const ImageMetaData& imageMetaData, const 
   {
     switch (m_metaData.m_itemType)
     {
-    case MetaData::Int16:
+    case MetaData::ItemType::Int16:
       padComponentBuffers(m_metaData, (int16_t*)m_itemBuffer, count);
       break;
-    case MetaData::Int32:
+    case MetaData::ItemType::Int32:
       padComponentBuffers(m_metaData, (int32_t*)m_itemBuffer, count);
       break;
     }
@@ -717,10 +736,10 @@ void EncoderBuffer::exportQuantizedBlocks(int16_t (*dst)[Dct::BlockSize2], int c
 #else
   switch (m_metaData.m_itemType)
   {
-  case MetaData::Int16:
+  case MetaData::ItemType::Int16:
     SimdFunctionChooser<ExportBlocksCallable>::perform<int16_t>(m_metaData.m_simdLength, m_metaData, dst, (int16_t*)m_itemBuffer, count);
     break;
-  case MetaData::Int32:
+  case MetaData::ItemType::Int32:
     SimdFunctionChooser<ExportBlocksCallable>::perform<int32_t>(m_metaData.m_simdLength, m_metaData, dst, (int32_t*)m_itemBuffer, count);
     break;
   }

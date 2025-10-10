@@ -10,6 +10,7 @@
 namespace Jpeg
 {
 
+enum EncoderBufferItemType : int;
 struct EncodingOptions;
 struct ImageMetaData;
 struct Size;
@@ -19,11 +20,7 @@ class EncoderBuffer
 public:
   struct MetaData
   {
-    enum ItemType
-    {
-      Int16,
-      Int32,
-    };
+    typedef EncoderBufferItemType ItemType;
 
     enum ComponentType
     {
@@ -58,7 +55,7 @@ public:
 
     std::vector<Component> m_components;
     std::vector<int> m_mcuComponents;
-    ItemType m_itemType = Int16;
+    ItemType m_itemType;
     int m_simdLengthLog2 = 0;
     int m_simdLength = 1;
     int m_maxSimdLength = 0x7fffffff;
@@ -67,8 +64,9 @@ public:
     int m_hScale = 1;
     int m_vScale = 1;
 
-    MetaData(const std::vector<ComponentInfo>& components, ItemType itemType = Int16, int maxSimdLength = 0x7fffffff);
+    MetaData(const std::vector<ComponentInfo>& components, const EncodingOptions& options);
 
+    static int getSimdLength(const EncodingOptions& options);
     static int getSimdLength(ItemType itemType, int maxSimdLength);
     bool setSimdLength(int simdLength);
 

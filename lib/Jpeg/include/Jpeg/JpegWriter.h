@@ -19,17 +19,18 @@ public:
   virtual int64_t writeJpegBytes(const char* bytes, int64_t count) = 0;
 };
 
+enum EncoderBufferItemType : int
+{
+  Int16,
+  Int32
+};
+
 struct EncodingOptions
 {
-  enum EncoderBufferItemType
-  {
-    Int16,
-    Int32
-  };
-
   bool m_averageInRgbSpace = true;
   EncoderBufferItemType m_encoderBufferItemType = Int16;
-  int m_encoderBufferMaxSimdLength = 0x7fffffff;
+  int m_encoderBufferMaxInt16SimdLength = 0x7fffffff;
+  int m_encoderBufferMaxInt32SimdLength = 0x7fffffff;
   int m_huffmanEncoderMaxSimdLength = 0x7fffffff;
   int m_byteStuffingMaxSimdLength = 0x7fffffff;
 };
@@ -41,7 +42,7 @@ public:
 
   bool setQuality(int quality);
 
-  static EncodingOptions::EncoderBufferItemType getEncoderBufferItemType(const EncodingOptions& options);
+  static EncoderBufferItemType getEncoderBufferItemType(const EncodingOptions& options);
   static int getEncoderBufferSimdLength(const EncodingOptions& options);
   static int getHuffmanEncoderSimdLength(const EncodingOptions& options);
   static int getByteStuffingSimdLength(const EncodingOptions& options);

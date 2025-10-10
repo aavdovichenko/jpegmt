@@ -1,6 +1,7 @@
 #include "JpegForwardDct.h"
 
 #include <Helper/Platform/Cpu/simd.h>
+#include <Jpeg/JpegWriter.h>
 
 #include "../EncoderBuffer/JpegEncoderBuffer.h"
 #include "../JpegQuantizer.h"
@@ -309,9 +310,9 @@ void ForwardDct::perform(EncoderBuffer& buffer, const Quantizer* quantizers, con
 {
   switch(buffer.m_metaData.m_itemType)
   {
-  case EncoderBuffer::MetaData::Int16:
+  case EncoderBufferItemType::Int16:
     return SimdFunctionChooser<dctCallable>::perform<int16_t>(buffer.m_metaData.m_simdLength, buffer.m_simdBlockCount, buffer.m_metaData, quantizers, componentQuantizerIndices, (int16_t*)buffer.m_itemBuffer);
-  case EncoderBuffer::MetaData::Int32:
+  case EncoderBufferItemType::Int32:
     return SimdFunctionChooser<dctCallable>::perform<int32_t>(buffer.m_metaData.m_simdLength, buffer.m_simdBlockCount, buffer.m_metaData, quantizers, componentQuantizerIndices, (int32_t*)buffer.m_itemBuffer);
   }
 }

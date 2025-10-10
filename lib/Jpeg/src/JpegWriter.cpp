@@ -42,28 +42,14 @@ bool Writer::setQuality(int quality)
   return true;
 }
 
-static EncoderBuffer::MetaData::ItemType metaDataItemType(EncodingOptions::EncoderBufferItemType type)
-{
-  switch (type)
-  {
-  case EncodingOptions::Int16:
-    return EncoderBuffer::MetaData::Int16;
-  case EncodingOptions::Int32:
-    return EncoderBuffer::MetaData::Int32;
-  }
-
-  assert(false);
-  return EncoderBuffer::MetaData::Int16;
-}
-
-EncodingOptions::EncoderBufferItemType Writer::getEncoderBufferItemType(const EncodingOptions& options)
+EncoderBufferItemType Writer::getEncoderBufferItemType(const EncodingOptions& options)
 {
   return options.m_encoderBufferItemType;
 }
 
 int Writer::getEncoderBufferSimdLength(const EncodingOptions& options)
 {
-  return EncoderBuffer::MetaData::getSimdLength(metaDataItemType(options.m_encoderBufferItemType), options.m_encoderBufferMaxSimdLength);
+  return EncoderBuffer::MetaData::getSimdLength(options);
 }
 
 int Writer::getHuffmanEncoderSimdLength(const EncodingOptions& options)
@@ -210,9 +196,9 @@ int16_t (*allocQuantizationBuffer(const EncoderBuffer::MetaData& bufferMetaData,
 {
   switch(bufferMetaData.m_itemType)
   {
-  case EncoderBuffer::MetaData::Int16:
+  case EncoderBufferItemType::Int16:
     return SimdFunctionChooser<AllocQuantizationBufferCallable>::perform<int16_t>(bufferMetaData.m_simdLength, count);
-  case EncoderBuffer::MetaData::Int32:
+  case EncoderBufferItemType::Int32:
     return SimdFunctionChooser<AllocQuantizationBufferCallable>::perform<int32_t>(bufferMetaData.m_simdLength, count);
   }
 
@@ -224,9 +210,9 @@ void releaseQuantizationBuffer(const EncoderBuffer::MetaData& bufferMetaData, in
 {
   switch (bufferMetaData.m_itemType)
   {
-  case EncoderBuffer::MetaData::Int16:
+  case EncoderBufferItemType::Int16:
     return SimdFunctionChooser<ReleaseQuantizationBufferCallable>::perform<int16_t>(bufferMetaData.m_simdLength, buffer);
-  case EncoderBuffer::MetaData::Int32:
+  case EncoderBufferItemType::Int32:
     return SimdFunctionChooser<ReleaseQuantizationBufferCallable>::perform<int32_t>(bufferMetaData.m_simdLength, buffer);
   }
   assert(false);
@@ -268,7 +254,7 @@ bool Writer::compressAndWrite(const ImageMetaData& imageMetaData, const uint8_t*
     componentInfo.push_back(info);
   }
 
-  EncoderBuffer::MetaData encoderBufferMetaData(componentInfo, metaDataItemType(options.m_encoderBufferItemType), options.m_encoderBufferMaxSimdLength);
+  EncoderBuffer::MetaData encoderBufferMetaData(componentInfo, options);
   HuffmanEncoderOptions huffmanEncoderOptions(options.m_huffmanEncoderMaxSimdLength, options.m_byteStuffingMaxSimdLength);
   int bufferSimdBlocks = 1;
 #ifndef TRANSPOSED_SIMD_BUFFER
