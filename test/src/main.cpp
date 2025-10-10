@@ -269,10 +269,10 @@ int main(int argc, char *argv[])
     Jpeg::Writer jpegWriter(&f, threadPool.get());
     jpegWriter.setQuality(quality);
 
-    Jpeg::EncodingOptions::EncoderBufferItemType itemType = jpegWriter.getEncoderBufferItemType(encodingOptions);
-    printf("encoder buffer  simd type: %sx%d\n", itemType == Jpeg::EncodingOptions::Int32 ? "int32" : "int16", jpegWriter.getEncoderBufferSimdLength(encodingOptions));
-    printf("huffman encoder simd type: int16x%d\n", jpegWriter.getHuffmanEncoderSimdLength(encodingOptions));
-    printf("byte stuffing   simd type: int8x%d\n", jpegWriter.getByteStuffingSimdLength(encodingOptions));
+    Jpeg::EncodingOptions::EncoderBufferItemType itemType = Jpeg::Writer::getEncoderBufferItemType(encodingOptions);
+    printf("encoder buffer  simd type: %sx%d\n", itemType == Jpeg::EncodingOptions::Int32 ? "int32" : "int16", Jpeg::Writer::getEncoderBufferSimdLength(encodingOptions));
+    printf("huffman encoder simd type: int16x%d\n", Jpeg::Writer::getHuffmanEncoderSimdLength(encodingOptions));
+    printf("byte stuffing   simd type: int8x%d\n", Jpeg::Writer::getByteStuffingSimdLength(encodingOptions));
 
     bool result = jpegWriter.write(imageMetaData, (const uint8_t*)image.scanline(0), encodingOptions);
     assert(result);

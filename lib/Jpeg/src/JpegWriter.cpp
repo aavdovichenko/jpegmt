@@ -56,22 +56,22 @@ static EncoderBuffer::MetaData::ItemType metaDataItemType(EncodingOptions::Encod
   return EncoderBuffer::MetaData::Int16;
 }
 
-EncodingOptions::EncoderBufferItemType Writer::getEncoderBufferItemType(const EncodingOptions& options) const
+EncodingOptions::EncoderBufferItemType Writer::getEncoderBufferItemType(const EncodingOptions& options)
 {
   return options.m_encoderBufferItemType;
 }
 
-int Writer::getEncoderBufferSimdLength(const EncodingOptions& options) const
+int Writer::getEncoderBufferSimdLength(const EncodingOptions& options)
 {
   return EncoderBuffer::MetaData::getSimdLength(metaDataItemType(options.m_encoderBufferItemType), options.m_encoderBufferMaxSimdLength);
 }
 
-int Writer::getHuffmanEncoderSimdLength(const EncodingOptions& options) const
+int Writer::getHuffmanEncoderSimdLength(const EncodingOptions& options)
 {
   return HuffmanEncoderOptions(options.m_huffmanEncoderMaxSimdLength, options.m_byteStuffingMaxSimdLength).m_encoderSimdLength;
 }
 
-int Writer::getByteStuffingSimdLength(const EncodingOptions& options) const
+int Writer::getByteStuffingSimdLength(const EncodingOptions& options)
 {
   return HuffmanEncoderOptions(options.m_huffmanEncoderMaxSimdLength, options.m_byteStuffingMaxSimdLength).m_byteStuffingSimdLength;
 }

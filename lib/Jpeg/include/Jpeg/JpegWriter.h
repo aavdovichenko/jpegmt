@@ -41,10 +41,10 @@ public:
 
   bool setQuality(int quality);
 
-  EncodingOptions::EncoderBufferItemType getEncoderBufferItemType(const EncodingOptions& options) const;
-  int getEncoderBufferSimdLength(const EncodingOptions& options) const;
-  int getHuffmanEncoderSimdLength(const EncodingOptions& options) const;
-  int getByteStuffingSimdLength(const EncodingOptions& options) const;
+  static EncodingOptions::EncoderBufferItemType getEncoderBufferItemType(const EncodingOptions& options);
+  static int getEncoderBufferSimdLength(const EncodingOptions& options);
+  static int getHuffmanEncoderSimdLength(const EncodingOptions& options);
+  static int getByteStuffingSimdLength(const EncodingOptions& options);
 
   bool write(const ImageMetaData& imageMetaData, const uint8_t* pixels, const EncodingOptions& options = EncodingOptions());
 
