@@ -90,8 +90,8 @@ template <bool aligned, int block>
 void loadRgbSimdBlocks(Platform::Cpu::int32x8_t(*matrix)[Dct::BlockSize][2], const int32_t(*blocks)[2][Dct::BlockSize])
 {
   typedef Platform::Cpu::SIMD<int32_t, 8> SimdHelper;
-  SimdHelper::transpose<true, 2, 2>(matrix[block][0], blocks[0][block]);
-  SimdHelper::transpose<true, 2, 2>(matrix[block][0] + 1, blocks[Dct::BlockSize][block]);
+  SimdHelper::transpose<aligned, 2, 2>(matrix[block][0], blocks[0][block]);
+  SimdHelper::transpose<aligned, 2, 2>(matrix[block][0] + 1, blocks[Dct::BlockSize][block]);
 }
 
 template<>
