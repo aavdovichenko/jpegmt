@@ -33,7 +33,7 @@ struct ImageMetaData
 
   bool isValid() const
   {
-    return m_format != Invalid && m_size.m_width > 0 && m_size.m_width > 0;
+    return m_format != Invalid && m_size.m_width > 0 && m_size.m_height > 0;
   }
 };
 
