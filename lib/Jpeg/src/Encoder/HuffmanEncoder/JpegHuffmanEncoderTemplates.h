@@ -118,7 +118,7 @@ struct RegisterBitsBuffer
   }
 };
 
-static constexpr int indexBitMask(int index, int w)
+static constexpr int16_t indexBitMask(int index, int w)
 {
   return index > w * 16 && index <= (w + 1) * 16 ? 1 << (index - w * 16 - 1) : 0;
 }
