@@ -38,21 +38,58 @@ protected:
 
   void executeWorkers(const WorkerFunction& f, const std::vector< std::pair<int64_t, int64_t> >& ranges) override
   {
-    for(size_t i = 0; i < ranges.size(); i++)
+#if 0
+    for (size_t i = 0; i < ranges.size(); i++)
     {
       m_threadPool.addJob([i, ranges, f]()
         {
           f((int)i, ranges.at(i).first, ranges.at(i).second);
         });
     }
+#else
+    m_threadPool.setCommonThreadFunction([f](const void* data)
+      {
+        ThreadData* threadData = (ThreadData*)data;
+        f(threadData->m_threadIndex, threadData->m_threadRangeMin, threadData->m_threadRangeMax);
+      });
+
+    if (m_threadData.size() < ranges.size())
+      m_threadData.resize(ranges.size());
+    if (m_threadDataPtr.size() < ranges.size())
+      m_threadDataPtr.resize(ranges.size());
+    for (size_t i = 0; i < ranges.size(); i++)
+    {
+      m_threadData[i] = ThreadData{(int)i, ranges.at(i).first, ranges.at(i).second};
+      m_threadDataPtr[i] = &m_threadData[i];
+    }
+    const void* const* data = m_threadDataPtr.data();
+    m_threadPool.addJobs(data, data + ranges.size());
+#endif
     m_threadPool.waitJobs();
   }
 
 protected:
   Helper::ThreadPool m_threadPool;
+  struct ThreadData
+  {
+    int m_threadIndex;
+    int64_t m_threadRangeMin;
+    int64_t m_threadRangeMax;
+  };
+  std::vector<ThreadData> m_threadData;
+  std::vector<const void*> m_threadDataPtr;
 };
 
 static std::unique_ptr<JpegThreadPool> threadPool;
+
+class JpegNullOutputStream : public Jpeg::OutputStream
+{
+public:
+  int64_t writeJpegBytes(const char*, int64_t count) override
+  {
+    return count;
+  }
+};
 
 class JpegMemoryOutputStream : public Jpeg::OutputStream
 {
@@ -114,7 +151,7 @@ void test0(const QImage& image)
 void test_libjpeg(const Image& image)
 {
   const Jpeg::ImageMetaData& imageMetaData = image.m_metaData;
-  JpegMemoryOutputStream buffer;
+  JpegNullOutputStream buffer;
   for (int i = 0; i < testPassCount; i++)
   {
     JpegLibWritter writer(&buffer);
@@ -128,7 +165,7 @@ void test_libjpeg(const Image& image)
 void test_jpegmt(const Image& image)
 {
   const Jpeg::ImageMetaData& imageMetaData = image.m_metaData;
-  JpegMemoryOutputStream buffer;
+  JpegNullOutputStream buffer;
   for (int i = 0; i < testPassCount; i++)
   {
     Jpeg::Writer writer(&buffer, threadPool.get());

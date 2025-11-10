@@ -1,3 +1,4 @@
+ROOT_DIR = .
 include(Libs.pri) # for HELPER_DIR
 
 TEMPLATE = subdirs
