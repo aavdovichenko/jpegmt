@@ -149,10 +149,10 @@ static inline Rgb8ToYccTable makeRgb8ToYccTable()
   {
     table.m_yTable.m_rWeights[i] = Rgb8ToYcc::yrWeight * i;
     table.m_yTable.m_gWeights[i] = Rgb8ToYcc::ygWeight * i;
-    table.m_yTable.m_bWeights[i] = Rgb8ToYcc::ybWeight * i + Rgb8ToYcc::fixedPointOneHalf;
+    table.m_yTable.m_bWeights[i] = Rgb8ToYcc::ybWeight * i + Rgb8ToYcc::FixedPoint::oneHalf;
     table.m_cbTable.m_rWeights[i] = Rgb8ToYcc::cbrWeight * i;
     table.m_cbTable.m_gWeights[i] = Rgb8ToYcc::cbgWeight * i;
-    table.m_cbTable.m_bWeights[i] = Rgb8ToYcc::fixedPointFromFloat(0.50000) * i + Rgb8ToYcc::cbcr8Offset + Rgb8ToYcc::fixedPointOneHalf - 1;
+    table.m_cbTable.m_bWeights[i] = Rgb8ToYcc::FixedPoint::fromDouble(0.5) * i + Rgb8ToYcc::cbcr8Offset + Rgb8ToYcc::FixedPoint::oneHalf - 1;
     table.m_crTable.m_rWeights[i] = table.m_cbTable.m_bWeights[i];
     table.m_crTable.m_gWeights[i] = Rgb8ToYcc::crgWeight * i;
     table.m_crTable.m_bWeights[i] = Rgb8ToYcc::crbWeight * i;

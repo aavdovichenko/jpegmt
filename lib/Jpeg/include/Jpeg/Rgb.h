@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <Helper/Platform/Cpu/cpu.h>
+#include <Helper/FixedPoint.h>
 
 #include "JpegImageMetaData.h"
 
@@ -34,38 +35,28 @@ template<> struct Rgb<ImageMetaData::Bgra32> : public Rgb32<ImageMetaData::Bgra3
 {
 };
 
-struct FixedPoint32
+struct Rgb8ToYcc
 {
-  typedef int32_t FixedPoint;
-  constexpr static int fixedPointFractionBits = 16;      /* speediest right-shift on some machines */
-  constexpr static FixedPoint fixedPointOneHalf = (FixedPoint)1 << (fixedPointFractionBits - 1);
+  typedef Helper::FixedPoint<int32_t, int32_t, 16> FixedPoint;
 
-  constexpr static FixedPoint fixedPointFromFloat(double x)
-  {
-    return ((FixedPoint)((x) * (1L << fixedPointFractionBits) + 0.5));
-  }
-};
+  constexpr static FixedPoint::Type yrWeight = FixedPoint::fromDouble(0.29900);
+  constexpr static FixedPoint::Type ybWeight = FixedPoint::fromDouble(0.11400);
+  constexpr static FixedPoint::Type ygWeight = FixedPoint::fromDouble(0.58700);
+  constexpr static FixedPoint::Type yOffset = -FixedPoint::fromInt32(128) + FixedPoint::oneHalf - 1;
 
-struct Rgb8ToYcc : public FixedPoint32
-{
-  constexpr static FixedPoint yrWeight = fixedPointFromFloat(0.29900);
-  constexpr static FixedPoint ybWeight = fixedPointFromFloat(0.11400);
-  constexpr static FixedPoint ygWeight = fixedPointFromFloat(0.58700);
-  constexpr static FixedPoint yOffset = -((FixedPoint)128 << fixedPointFractionBits) + fixedPointOneHalf - 1;
+  constexpr static FixedPoint::Type cbrWeight = -FixedPoint::fromDouble(0.16874);
+  constexpr static FixedPoint::Type cbgWeight = -FixedPoint::fromDouble(0.33126);
 
-  constexpr static FixedPoint cbrWeight = -fixedPointFromFloat(0.16874);
-  constexpr static FixedPoint cbgWeight = -fixedPointFromFloat(0.33126);
-
-  constexpr static FixedPoint crbWeight = -fixedPointFromFloat(0.08131);
-  constexpr static FixedPoint crgWeight = -fixedPointFromFloat(0.41869);
+  constexpr static FixedPoint::Type crbWeight = -FixedPoint::fromDouble(0.08131);
+  constexpr static FixedPoint::Type crgWeight = -FixedPoint::fromDouble(0.41869);
 
   template<int cbcrAddFractionBits>
-  constexpr static FixedPoint cbcrOffset()
+  constexpr static FixedPoint::Type cbcrOffset()
   {
-    return ((FixedPoint)1 << (fixedPointFractionBits + cbcrAddFractionBits - 1)) - (1 << cbcrAddFractionBits);
+    return ((FixedPoint::Type)1 << (FixedPoint::fractionBits + cbcrAddFractionBits - 1)) - (1 << cbcrAddFractionBits);
   }
 
-  constexpr static FixedPoint cbcr8Offset = (FixedPoint)128 << fixedPointFractionBits;
+  constexpr static FixedPoint::Type cbcr8Offset = FixedPoint::fromInt32(128);
 
   template<ImageMetaData::Format format> static inline int32_t rgbToY(uint32_t rgb);
   template<ImageMetaData::Format format> static inline int32_t rgbToCb(uint32_t rgb);
@@ -145,21 +136,21 @@ inline typename Rgb32<format>::PixelType Rgb32<format>::rgb(ComponentType r, Com
 template<ImageMetaData::Format format>
 inline int32_t Rgb8ToYcc::rgbToY(uint32_t rgb)
 {
-  return (yrWeight * Rgb<format>::red(rgb) + ygWeight * Rgb<format>::green(rgb) + ybWeight * Rgb<format>::blue(rgb)) >> fixedPointFractionBits;
+  return FixedPoint::toInt32(yrWeight * Rgb<format>::red(rgb) + ygWeight * Rgb<format>::green(rgb) + ybWeight * Rgb<format>::blue(rgb));
 }
 
 template<ImageMetaData::Format format>
 inline int32_t Rgb8ToYcc::rgbToCb(uint32_t rgb)
 {
-  return (cbrWeight * Rgb<format>::red(rgb) + cbgWeight * Rgb<format>::green(rgb) +
-    fixedPointFromFloat(0.50000) * Rgb<format>::blue(rgb) + cbcr8Offset + fixedPointOneHalf - 1) >> fixedPointFractionBits;
+  return FixedPoint::toInt32(cbrWeight * Rgb<format>::red(rgb) + cbgWeight * Rgb<format>::green(rgb) +
+    FixedPoint::fromDouble(0.5) * Rgb<format>::blue(rgb) + cbcr8Offset + FixedPoint::oneHalf - 1);
 }
 
 template<ImageMetaData::Format format>
 inline int32_t Rgb8ToYcc::rgbToCr(uint32_t rgb)
 {
-  return (fixedPointFromFloat(0.50000) * Rgb<format>::red(rgb) + crgWeight * Rgb<format>::green(rgb) +
-    crbWeight * Rgb<format>::blue(rgb) + cbcr8Offset + fixedPointOneHalf - 1) >> fixedPointFractionBits;
+  return FixedPoint::toInt32(FixedPoint::fromDouble(0.5) * Rgb<format>::red(rgb) + crgWeight * Rgb<format>::green(rgb) +
+    crbWeight * Rgb<format>::blue(rgb) + cbcr8Offset + FixedPoint::oneHalf - 1);
 }
 
 }

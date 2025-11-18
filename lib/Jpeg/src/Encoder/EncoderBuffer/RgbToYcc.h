@@ -11,9 +11,9 @@ struct Rgb8ToYccTable : public Rgb8ToYcc
 {
   struct Weights
   {
-    FixedPoint m_rWeights[256];
-    FixedPoint m_gWeights[256];
-    FixedPoint m_bWeights[256];
+    FixedPoint::Type m_rWeights[256];
+    FixedPoint::Type m_gWeights[256];
+    FixedPoint::Type m_bWeights[256];
 
     inline int32_t rgbToComponentValue(int r, int g, int b) const;
     template<ImageMetaData::Format rgbFormat> inline int32_t rgbToComponentValue(uint32_t rgb) const;
@@ -39,10 +39,10 @@ struct RgbToYcc<int16_t, SimdLength, cbcrAddFractionBits> : public Rgb8ToYcc
 
   static SimdType y(SimdType r, SimdType g, SimdType b)
   {
-    constexpr int32_t ybgWeight = fixedPointFromFloat(0.25000);
+    constexpr int32_t ybgWeight = FixedPoint::fromDouble(0.25000);
     constexpr int32_t yrgWeight = ygWeight - ybgWeight;
 
-    return (SimdHelper::template mulAdd<yrWeight, yrgWeight>(r, g) + SimdHelper::template mulAdd<ybWeight, ybgWeight>(b, g) + ExtendedSimdType::populate(yOffset)).template descale<fixedPointFractionBits>();
+    return (SimdHelper::template mulAdd<yrWeight, yrgWeight>(r, g) + SimdHelper::template mulAdd<ybWeight, ybgWeight>(b, g) + ExtendedSimdType::populate(yOffset)).template descale<FixedPoint::fractionBits>();
   }
 
   static SimdType cb(SimdType r, SimdType g, SimdType b, int32_t bias = 0)
@@ -51,7 +51,7 @@ struct RgbToYcc<int16_t, SimdLength, cbcrAddFractionBits> : public Rgb8ToYcc
     if (cbcrAddFractionBits)
       offset += bias;
     // TODO: unsigned extend()
-    return (SimdHelper::template mulAdd<cbrWeight, cbgWeight>(r, g) + (SimdHelper::extend(b) << (fixedPointFractionBits - 1)) + ExtendedSimdType::populate(offset)).template descale<fixedPointFractionBits + cbcrAddFractionBits>();
+    return (SimdHelper::template mulAdd<cbrWeight, cbgWeight>(r, g) + (SimdHelper::extend(b) << (FixedPoint::fractionBits - 1)) + ExtendedSimdType::populate(offset)).template descale<FixedPoint::fractionBits + cbcrAddFractionBits>();
   }
 
   static SimdType cr(SimdType r, SimdType g, SimdType b, int32_t bias = 0)
@@ -60,7 +60,7 @@ struct RgbToYcc<int16_t, SimdLength, cbcrAddFractionBits> : public Rgb8ToYcc
     if (cbcrAddFractionBits)
       offset += bias;
     // TODO: unsigned extend()
-    return (SimdHelper::template mulAdd<crgWeight, crbWeight>(g, b) + (SimdHelper::extend(r) << (fixedPointFractionBits - 1)) + ExtendedSimdType::populate(offset)).template descale<fixedPointFractionBits + cbcrAddFractionBits>();
+    return (SimdHelper::template mulAdd<crgWeight, crbWeight>(g, b) + (SimdHelper::extend(r) << (FixedPoint::fractionBits - 1)) + ExtendedSimdType::populate(offset)).template descale<FixedPoint::fractionBits + cbcrAddFractionBits>();
   }
 };
 
@@ -72,17 +72,17 @@ struct RgbToYcc<int32_t, SimdLength, cbcrAddFractionBits> : public Rgb8ToYcc
 
   static SimdType y(SimdType r, SimdType g, SimdType b)
   {
-    return (r * yrWeight + g * ygWeight + b * ybWeight + SimdHelper::populate(yOffset)) >> fixedPointFractionBits;
+    return (r * yrWeight + g * ygWeight + b * ybWeight + SimdHelper::populate(yOffset)) >> FixedPoint::fractionBits;
   }
 
   static SimdType cb(SimdType r, SimdType g, SimdType b, int32_t bias = 0)
   {
-    return ((b << (fixedPointFractionBits - 1)) + r * cbrWeight + g * cbgWeight + SimdHelper::populate(cbcrOffset<cbcrAddFractionBits>() + bias)) >> (fixedPointFractionBits + cbcrAddFractionBits);
+    return ((b << (FixedPoint::fractionBits - 1)) + r * cbrWeight + g * cbgWeight + SimdHelper::populate(cbcrOffset<cbcrAddFractionBits>() + bias)) >> (FixedPoint::fractionBits + cbcrAddFractionBits);
   }
 
   static SimdType cr(SimdType r, SimdType g, SimdType b, int32_t bias = 0)
   {
-    return ((r << (fixedPointFractionBits - 1)) + g * crgWeight + b * crbWeight + SimdHelper::populate(cbcrOffset<cbcrAddFractionBits>() + bias)) >> (fixedPointFractionBits + cbcrAddFractionBits);
+    return ((r << (FixedPoint::fractionBits - 1)) + g * crgWeight + b * crbWeight + SimdHelper::populate(cbcrOffset<cbcrAddFractionBits>() + bias)) >> (FixedPoint::fractionBits + cbcrAddFractionBits);
   }
 };
 
@@ -91,17 +91,17 @@ struct RgbToYccNoSimd : public Rgb8ToYcc
 {
   static T y(T r, T g, T b)
   {
-    return (r * yrWeight + g * ygWeight + b * ybWeight + yOffset) >> fixedPointFractionBits;
+    return (r * yrWeight + g * ygWeight + b * ybWeight + yOffset) >> FixedPoint::fractionBits;
   }
 
   static T cb(T r, T g, T b, int32_t bias = 0)
   {
-    return ((b << (fixedPointFractionBits - 1)) + r * cbrWeight + g * cbgWeight + cbcrOffset<cbcrAddFractionBits>() + bias) >> (fixedPointFractionBits + cbcrAddFractionBits);
+    return ((b << (FixedPoint::fractionBits - 1)) + r * cbrWeight + g * cbgWeight + cbcrOffset<cbcrAddFractionBits>() + bias) >> (FixedPoint::fractionBits + cbcrAddFractionBits);
   }
 
   static T cr(T r, T g, T b, int32_t bias = 0)
   {
-    return ((r << (fixedPointFractionBits - 1)) + g * crgWeight + b * crbWeight + cbcrOffset<cbcrAddFractionBits>() + bias) >> (fixedPointFractionBits + cbcrAddFractionBits);
+    return ((r << (FixedPoint::fractionBits - 1)) + g * crgWeight + b * crbWeight + cbcrOffset<cbcrAddFractionBits>() + bias) >> (FixedPoint::fractionBits + cbcrAddFractionBits);
   }
 };
 
@@ -119,7 +119,7 @@ struct RgbToYcc<int32_t, 1, cbcrAddFractionBits> : public RgbToYccNoSimd<int32_t
 
 inline int32_t Jpeg::Rgb8ToYccTable::Weights::rgbToComponentValue(int r, int g, int b) const
 {
-  return (m_rWeights[r] + m_gWeights[g] + m_bWeights[b]) >> fixedPointFractionBits;
+  return FixedPoint::toInt32(m_rWeights[r] + m_gWeights[g] + m_bWeights[b]);
 }
 
 template<ImageMetaData::Format rgbFormat>
