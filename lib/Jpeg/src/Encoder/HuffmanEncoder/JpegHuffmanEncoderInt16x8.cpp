@@ -15,14 +15,14 @@ static uint64_t reduce(Platform::Cpu::int16x8_t mask)
 
 typedef AcBitMask<Platform::Cpu::int16x8_t> AcBitMaskx8;
 
-static AcBitMaskx8 acBitMaskx8_0 = makeAcBitMask<Platform::Cpu::int16x8_t, 0, 1, 5, 6, 14, 15, 27, 28>();
-static AcBitMaskx8 acBitMaskx8_1 = makeAcBitMask<Platform::Cpu::int16x8_t, 2, 4, 7, 13, 16, 26, 29, 42>();
-static AcBitMaskx8 acBitMaskx8_2 = makeAcBitMask<Platform::Cpu::int16x8_t, 3, 8, 12, 17, 25, 30, 41, 43>();
-static AcBitMaskx8 acBitMaskx8_3 = makeAcBitMask<Platform::Cpu::int16x8_t, 9, 11, 18, 24, 31, 40, 44, 53>();
-static AcBitMaskx8 acBitMaskx8_4 = makeAcBitMask<Platform::Cpu::int16x8_t, 10, 19, 23, 32, 39, 45, 52, 54>();
-static AcBitMaskx8 acBitMaskx8_5 = makeAcBitMask<Platform::Cpu::int16x8_t, 20, 22, 33, 38, 46, 51, 55, 60>();
-static AcBitMaskx8 acBitMaskx8_6 = makeAcBitMask<Platform::Cpu::int16x8_t, 21, 34, 37, 47, 50, 56, 59, 61>();
-static AcBitMaskx8 acBitMaskx8_7 = makeAcBitMask<Platform::Cpu::int16x8_t, 35, 36, 48, 49, 57, 58, 62, 63>();
+static inline AcBitMaskx8 acBitMaskx8_0() { return makeAcBitMask<Platform::Cpu::int16x8_t, 0, 1, 5, 6, 14, 15, 27, 28>(); };
+static inline AcBitMaskx8 acBitMaskx8_1() { return makeAcBitMask<Platform::Cpu::int16x8_t, 2, 4, 7, 13, 16, 26, 29, 42>(); };
+static inline AcBitMaskx8 acBitMaskx8_2() { return makeAcBitMask<Platform::Cpu::int16x8_t, 3, 8, 12, 17, 25, 30, 41, 43>(); };
+static inline AcBitMaskx8 acBitMaskx8_3() { return makeAcBitMask<Platform::Cpu::int16x8_t, 9, 11, 18, 24, 31, 40, 44, 53>(); };
+static inline AcBitMaskx8 acBitMaskx8_4() { return makeAcBitMask<Platform::Cpu::int16x8_t, 10, 19, 23, 32, 39, 45, 52, 54>(); };
+static inline AcBitMaskx8 acBitMaskx8_5() { return makeAcBitMask<Platform::Cpu::int16x8_t, 20, 22, 33, 38, 46, 51, 55, 60>(); };
+static inline AcBitMaskx8 acBitMaskx8_6() { return makeAcBitMask<Platform::Cpu::int16x8_t, 21, 34, 37, 47, 50, 56, 59, 61>(); };
+static inline AcBitMaskx8 acBitMaskx8_7() { return makeAcBitMask<Platform::Cpu::int16x8_t, 35, 36, 48, 49, 57, 58, 62, 63>(); };
 
 template<>
 FORCE_INLINE uint64_t getAcMask<8>(const int16_t* block, int16_t* dst)
@@ -39,21 +39,21 @@ FORCE_INLINE uint64_t getAcMask<8>(const int16_t* block, int16_t* dst)
   int16x8_t w7 = int16x8_t::load<true>(block + 56);
   int16x8_t zero = int16x8_t::zero();
 
-  updateMaskBits<int16x8_t, 0x3>(acBitMaskx8_0, (w0 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0x3>(acBitMaskx8_0(), (w0 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w0.onesComplement().store(dst);
-  updateMaskBits<int16x8_t, 0x7>(acBitMaskx8_1, (w1 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0x7>(acBitMaskx8_1(), (w1 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w1.onesComplement().store(dst + 8);
-  updateMaskBits<int16x8_t, 0x7>(acBitMaskx8_2, (w2 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0x7>(acBitMaskx8_2(), (w2 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w2.onesComplement().store(dst + 16);
-  updateMaskBits<int16x8_t, 0xf>(acBitMaskx8_3, (w3 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0xf>(acBitMaskx8_3(), (w3 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w3.onesComplement().store(dst + 24);
-  updateMaskBits<int16x8_t, 0xf>(acBitMaskx8_4, (w4 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0xf>(acBitMaskx8_4(), (w4 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w4.onesComplement().store(dst + 32);
-  updateMaskBits<int16x8_t, 0xe>(acBitMaskx8_5, (w5 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0xe>(acBitMaskx8_5(), (w5 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w5.onesComplement().store(dst + 40);
-  updateMaskBits<int16x8_t, 0xe>(acBitMaskx8_6, (w6 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0xe>(acBitMaskx8_6(), (w6 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w6.onesComplement().store(dst + 48);
-  updateMaskBits<int16x8_t, 0xc>(acBitMaskx8_7, (w7 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
+  updateMaskBits<int16x8_t, 0xc>(acBitMaskx8_7(), (w7 == zero).mask(), bits0_15, bits16_31, bits32_47, bits48_63);
   w7.onesComplement().store(dst + 56);
 
   return reduce(bits0_15) | (reduce(bits16_31) << 16) | (reduce(bits32_47) << 32) | (reduce(bits48_63) << 48);
