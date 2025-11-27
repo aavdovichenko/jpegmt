@@ -19,7 +19,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
     - name: Install dependencies
@@ -40,7 +40,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
     - name: Install dependencies
